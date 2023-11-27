@@ -1,34 +1,45 @@
-const cpfProtegido = Symbol('cpf');
+// 705.484.450-52 070.987.720-03
+export default class ValidaCPF {
+  constructor(cpfEnviado) {
+    Object.defineProperty(this, 'cpfLimpo', {
+      writable: false,
+      enumerable: true,
+      configurable: false,
+      value: cpfEnviado.replace(/\D+/g, '')
+    });
+  }
 
-class ValidaCPF{
-    constructor(cpf){
-        this.cpf = cpf;
-        this[cpfProtegido] = 0;
+  éSequência() {
+    return this.cpfLimpo.charAt(0).repeat(11) === this.cpfLimpo;
+  }
+
+  geraNovoCpf() {
+    const cpfSemDigitos = this.cpfLimpo.slice(0, -2);
+    const digito1 = ValidaCPF.geraDigito(cpfSemDigitos);
+    const digito2 = ValidaCPF.geraDigito(cpfSemDigitos + digito1);
+    this.novoCPF = cpfSemDigitos + digito1 + digito2;
+  }
+
+  static geraDigito(cpfSemDigitos) {
+    let total = 0;
+    let reverso = cpfSemDigitos.length + 1;
+
+    for(let stringNumerica of cpfSemDigitos) {
+      total += reverso * Number(stringNumerica);
+      reverso--;
     }
 
-    validar(){
-        let cpfLimpo = this.cpf.replace(/\D+/g, '');
+    const digito = 11 - (total % 11);
+    return digito <= 9 ? String(digito) : '0';
+  }
 
-        let digito1 = this.encontrar(cpfLimpo.slice(0, -2));
-        let digito2 = this.encontrar(cpfLimpo.slice(0, -2) + digito1);
+  valida() {
+    if(!this.cpfLimpo) return false;
+    if(typeof this.cpfLimpo !== 'string') return false;
+    if(this.cpfLimpo.length !== 11) return false;
+    if(this.éSequência()) return false;
+    this.geraNovoCpf();
 
-        console.log(digito1);
-        console.log(digito2);
-    }
-
-    encontrar(valor){
-        let cpfArray = Array.from(valor);
-        let contador = cpfArray.length + 1;
-
-        let somaGeral = cpfArray.reduce((a, v) => {
-            a += (contador * Number(v));
-            contador--;
-            return a;
-        }, 0)
-
-        return 11 - (somaGeral % 11);
-    }
+    return this.novoCPF === this.cpfLimpo;
+  }
 }
-
-let cpf1 = new ValidaCPF('450.380.428-64');
-cpf1.validar();
